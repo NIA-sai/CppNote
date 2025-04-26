@@ -4,9 +4,11 @@
 >
 > [github](https://github.com/NIA-sai/CppNote) 
 
+~2025年4月26日16点38分~
 
+# todo
 
-
+- RAII
 
 
 
@@ -15,6 +17,12 @@
 ### 权限
 
 - `friend` 可以写在类的任何位置
+
+- | 父类成员权限     | public继承 | protected继承    | private继承    |
+  | ---------------- | ---------- | ---------------- | -------------- |
+  | `public` 成员    | 不变       | 变成 `protected` | 变成 `private` |
+  | `protected` 成员 | 不变       | 变成 `protected` | 变成 `private` |
+  | `private` 成员   | 无法访问   | 无法访问         | 无法访问       |
 
 ### Virtual
 
@@ -27,11 +35,22 @@
 - `=default`强制生成默认函数
 - `=delete`禁用函数（阻止调用或生成）
 - 基类构造器在初始化列表直接这样 `MyClass(int x) : Base(x) `
+- 有显式对象形参的函数体内不能使用 this 指针
+- 成员函数后面加&只能被r-value的对象调用
+- && 只能l-value
+
+#### 拷贝
+
+- 狗操的浅拷贝和局部变量（btw std::sort没有考虑到无深拷贝方法的”低端数组“）
+  tip: 手动将局部变量转移让他去瞎几把delete
+
+### 基类
+
+- 基类的 初始化顺序 取决于它们在 继承时 的顺序 ，与初始化列表中的顺序无关。
 
 ### 成员
 
 - 成员变量的 初始化顺序 取决于它们在 类 中的 声明顺序 ，与初始化列表中的顺序无关。
-
 - const和引用和无默认构造的成员需要在初始化列表内初始化
 
 ### 继承
@@ -39,11 +58,23 @@
 - `std::any` (c:void*,go:any,java:Object)
   `std::any_cast</*truetype*/>`
 
+### 多态
+
+- 对象不能实现多态
+
+- `typeid` 返回实际类型的type_info
+
+
+
 
 
 
 
 -----
+
+
+
+
 
 
 
@@ -104,7 +135,7 @@
   ```
 
 
-  
+
 
   std提供了一些标准概念：
 
@@ -151,13 +182,15 @@
 
 
 
-
+****
 
 
 
 
 
 -----
+
+
 
 
 
@@ -234,9 +267,25 @@
 
 
 
+
+
+
+
 ## 指针
 
 - 指针按值传递只能修改指针指向的内容的内容，若要修改指向的内容，需要使用二级指针或者引用指针
+
+- `*` 号前的几乎意味指针指向的类型及类型的修饰，之后再是对指针的修饰，如
+  `const int* const& a`
+  常量整型         常指针的引用
+
+
+
+
+
+
+
+
 
 ### 函数指针
 
@@ -294,8 +343,11 @@ typedef void (*FuncPtr)();// 定义类型别名` `FuncPtrFuncPtr func_ptr;// 声
   `placement new` 对一些已经（用operator new）被分配可是尚未处理的的(raw)内存，你须要在这些内存中构造一个对象`new (rwa) Object();`
 
   全都是返回指针
+  使用`operator new` 需要用 `operator delete`(不会调用析构函数) 来delete
 
+- 最好到处=nullptr
 
+- 浅拷贝其一问题：局部变量调用析构函数使得原变量指针delete
 
 
 
@@ -311,3 +363,75 @@ typedef void (*FuncPtr)();// 定义类型别名` `FuncPtrFuncPtr func_ptr;// 声
 
 - `noexcept` 用于明确指示函数 不会抛出异常
   条件性 `noexcept`： `noexcept(/*bool*/)` , `noexcept(func());  // 若 func() 不抛异常，返回 true`,  根据编译期布尔表达式决定是否标记为 `noexcept`
+
+
+
+
+
+
+
+-----
+
+
+
+
+
+## Attribute
+
+- [[deprecated]] 弃用
+- [[nodiscard]] 不可忽略返回值
+
+
+
+
+
+
+
+
+
+## 其他
+
+- explicit 禁隐式，构造函数更安全
+  ````cpp
+  class MyClass {
+  public:
+      explicit MyClass(int x) { std::cout << "MyClass(" << x << ")\n"; }
+  };
+  
+  void print(MyClass m) {}
+  
+  int main() {
+      print(10);  // ❌ 编译错误：不能从 int 隐式构造 MyClass
+      print(MyClass(10));  // ✅ 显式构造就没问题
+  }
+  
+  class MyClass {//c++11
+  public:
+      explicit operator bool() const {
+          return true;
+      }
+  };
+  
+  ````
+
+- 根据 ADL(Argument-Dependent Lookup，参数相关查找), using 了未必会一定使用对应 namespace 的成员，因此
+  ````
+  using std::swap;
+  swap(*a,*b);
+  ````
+
+  确有其用
+
+- `<=>` 返回值为
+
+- ```
+  std::strong_ordering
+  std::weak_ordering//忽略大小写
+  std::partial_ordering//浮点数"NaN"
+  ```
+
+- `{}` 窄化转换（narrowing conversion）调用构造函数时不允许隐式类型转换
+
+- typeid()对没有虚函数表的（没实现多态的）并不会返回实际类型，这很奇怪，就算只写virtual而不在基类覆盖，也会改变typeid()的行为
+
+- 栈只有几MB
