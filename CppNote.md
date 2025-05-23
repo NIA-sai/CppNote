@@ -26,6 +26,8 @@
 
 ### Virtual
 
+- 会无法取消地继承
+
 - virtual`~`
 
 - `=0` 纯虚
@@ -255,7 +257,9 @@
 - `__FUNCSIG__`
 - `_CRT_SECURE_NO_WARNINGS`(msvc用于禁用与 **CRT**（C Runtime Library）安全函数相关的编译器警告)
 
-
+- `##` 按字符串连接
+- `#`转换为字符串
+- `\`多行
 
 
 
@@ -435,3 +439,18 @@ typedef void (*FuncPtr)();// 定义类型别名` `FuncPtrFuncPtr func_ptr;// 声
 - typeid()对没有虚函数表的（没实现多态的）并不会返回实际类型，这很奇怪，就算只写virtual而不在基类覆盖，也会改变typeid()的行为
 
 - 栈只有几MB
+
+- 模板显式实例化（template explicit instantiation）技巧，可以在某些情况下绕过访问控制（访问 private 或 protected 成员）。
+  ````cpp
+  template<typename T, typename M, M T::*Member>
+  struct Accessor {
+      friend M get(T& obj) {
+          return obj.*Member;
+      }
+  };
+  
+  // 专门实例化出 secret 指针：
+  template struct Accessor<MyClass, int, &MyClass::secret>;
+  ````
+
+  
